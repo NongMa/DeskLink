@@ -44,10 +44,10 @@ vendor\platform-tools\…      adb 1.0.41
 $env:PATH = "C:\Users\$env:USERNAME\.cargo\bin;" + $env:PATH
 
 # 1. vrc-server
-cargo build --release --manifest-file pc\windows-server\Cargo.toml
+cargo build --release --manifest-path pc\windows-server\Cargo.toml
 
 # 2. vrc-admin（Tauri v2，bundle 关闭，只产出 exe）
-cargo build --release --manifest-file pc\tauri-admin\src-tauri\Cargo.toml
+cargo build --release --manifest-path pc\tauri-admin\src-tauri\Cargo.toml
 
 # 3. MSI（WiX v7）
 wix eula accept wix7

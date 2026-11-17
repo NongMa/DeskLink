@@ -26,16 +26,22 @@ jobs:
 
       - name: Install Android SDK (platform 37)
         run: |
-          yes | sdkmanager --licenses >/dev/null 2>&1 || true
-          sdkmanager "platforms;android-37" "build-tools;37.0.0"
-          sdkmanager --list_installed | grep -E 'android-37' || true
+          echo "ANDROID_HOME=$ANDROID_HOME"; echo "ANDROID_SDK_ROOT=$ANDROID_SDK_ROOT"
+          SDKMGR="$(find "${ANDROID_HOME:-$HOME/Android/Sdk}" -name sdkmanager -type f 2>/dev/null | head -n1)"
+          echo "sdkmanager=$SDKMGR"
+          test -n "$SDKMGR"
+          yes | "$SDKMGR" --licenses >/dev/null 2>&1 || true
+          "$SDKMGR" "platforms;android-37" "build-tools;37.0.0"
+          "$SDKMGR" --list_installed || true
 
       - name: Download SenseVoice model (~226 MB, not in repo)
         run: |
           mkdir -p android/app/src/main/assets/sense-voice
           curl -sSL "https://github.com/k2-fsa/sherpa-onnx/releases/download/asr-models/sherpa-onnx-sense-voice-zh-en-ja-ko-yue-int8-2024-07-17.tar.bz2" -o /tmp/model.tar.bz2
           tar -xjf /tmp/model.tar.bz2 -C /tmp
-          cp /tmp/sherpa-onnx-sense-voice-zh-en-ja-ko-yue-int8-2024-07-17/model.int8.onnx android/app/src/main/assets/sense-voice/
+          MODEL="$(find /tmp -name model.int8.onnx -type f 2>/dev/null | head -n1)"
+          echo "model=$MODEL"; test -n "$MODEL"
+          cp "$MODEL" android/app/src/main/assets/sense-voice/
           ls -la android/app/src/main/assets/sense-voice/
 
       - name: Build Release APK
@@ -69,11 +75,11 @@ jobs:
 
       - name: Build vrc-server
         shell: pwsh
-        run: cargo build --release --manifest-file pc/windows-server/Cargo.toml
+        run: cargo build --release --manifest-path pc/windows-server/Cargo.toml
 
       - name: Build vrc-admin (Tauri)
         shell: pwsh
-        run: cargo build --release --manifest-file pc/tauri-admin/src-tauri/Cargo.toml
+        run: cargo build --release --manifest-path pc/tauri-admin/src-tauri/Cargo.toml
 
       - name: Build MSI
         shell: pwsh
