@@ -22,8 +22,6 @@ build/
 
 # ===== 大体积二进制（不入 git；获取方式见各端 README）=====
 /pc/windows-server/models/
-/pc/windows-server/vendor/*
-!/pc/windows-server/vendor/README.md
 /android/app/src/main/assets/sense-voice/*.onnx
 
 appicon/

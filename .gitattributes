@@ -1,0 +1,2 @@
+# vendor 第三方预编译二进制：不做换行符转换、不生成文本 diff
+/pc/windows-server/vendor/** binary

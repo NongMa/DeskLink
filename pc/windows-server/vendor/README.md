@@ -1,6 +1,6 @@
 # vendor/ — 预编译第三方组件
 
-这些二进制随服务整体分发（MSI 打包时一并带走），仅供 VoiceRemoteControl 的「投屏」功能使用。
+这些二进制随服务整体分发（MSI 打包时一并带走），仅供桌链 DeskLink 的「投屏」功能使用。
 
 ## scrcpy/ — v5.0.1（Genymobile/scrcpy）
 
