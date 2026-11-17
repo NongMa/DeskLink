@@ -164,13 +164,13 @@ fun RemoteControlScreen(modifier: Modifier = Modifier) {
             ) {
                 Column {
                     Text(
-                        text = "语音遥控",
+                        text = "桌链",
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.onSurface
                     )
                     Text(
-                        text = "VOICE REMOTE CONTROL",
+                        text = "DESKLINK",
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )

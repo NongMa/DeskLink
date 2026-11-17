@@ -34,6 +34,7 @@ vendor\platform-tools\…      adb 1.0.41
 ```
 
 - 开始菜单「桌链 DeskLink」快捷方式（公共开始菜单，图标 = icon_vrc）
+- 桌面快捷方式（公共桌面，同图标；per-machine 安装后自动创建）
 - 控制面板卸载条目带图标（ARPPRODUCTICON）
 - 安装需 UAC 提权（per-machine，与 Tauri 同款）；HKCU 自启 MSI 不配置
 

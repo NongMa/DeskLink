@@ -26,6 +26,7 @@ $guidRoot = "{C428A110-8B3A-4A5B-9D7E-F1A2B3C4D5E6}"
 $guidScr  = "{B2345678-90EF-1234-ABCD-FEDCBA987654}"
 $guidPlat = "{C3456789-0DEF-1234-5678-9ABCDEF01234}"
 $guidMenu = "{D4567890-1234-5678-ABCD-EF0123456789}"
+$guidDesktop = "{F7890123-4567-89AB-CDEF-0123456789BC}"
 $guidVen  = "{E5678901-2345-6789-BCDE-F0123456789A}"
 
 function FileLines($paths, $indent) {
@@ -117,6 +118,13 @@ $(RegKey "Models" 14)
         </Component>
       </Directory>
     </StandardDirectory>
+    <StandardDirectory Id="DesktopFolder">
+      <Component Id="cmp_DesktopShortcut" Guid="$guidDesktop">
+        <RegistryValue Root="HKCU" Key="Software\DeskLink" Name="DesktopShortcut" Type="integer" Value="1" KeyPath="yes" />
+        <Shortcut Id="scm_Desktop" Name="桌链 DeskLink" Description="手机与 Windows 协同（语音 / 投屏 / 文件）"
+                  Target="[INSTALLFOLDER]vrc-server.exe" WorkingDirectory="INSTALLFOLDER" Icon="icon_vrc" />
+      </Component>
+    </StandardDirectory>
     <Feature Id="Main" Title="桌链 DeskLink" Level="1">
       <ComponentRef Id="cmp_Root" />
       <ComponentRef Id="cmp_dir_vendor" />
@@ -124,6 +132,7 @@ $(RegKey "Models" 14)
       <ComponentRef Id="cmp_dir_vendor_platformtools" />
       <ComponentRef Id="cmp_dir_models" />
       <ComponentRef Id="cmp_StartMenuShortcut" />
+      <ComponentRef Id="cmp_DesktopShortcut" />
     </Feature>
   </Package>
 </Wix>
