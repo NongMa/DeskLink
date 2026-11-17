@@ -31,7 +31,7 @@ jobs:
           echo "sdkmanager=$SDKMGR"
           test -n "$SDKMGR"
           yes | "$SDKMGR" --licenses >/dev/null 2>&1 || true
-          "$SDKMGR" "platforms;android-37" "build-tools;37.0.0"
+          "$SDKMGR" "platforms;android-37.0" "build-tools;37.0.0"
           "$SDKMGR" --list_installed || true
 
       - name: Download SenseVoice model (~226 MB, not in repo)
