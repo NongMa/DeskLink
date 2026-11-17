@@ -1,0 +1,105 @@
+# 桌链 DeskLink CI：自动构建手机端 APK 与 PC 端 MSI
+# - push 到 main：只构建并归档产物（14 天）
+# - 打 tag v*    ：构建 + 创建 GitHub Release 并附加产物
+name: build
+
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  android:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: gradle
+
+      - name: Install Android SDK (platform 37)
+        run: |
+          yes | sdkmanager --licenses >/dev/null 2>&1 || true
+          sdkmanager "platforms;android-37" "build-tools;37.0.0"
+          sdkmanager --list_installed | grep -E 'android-37' || true
+
+      - name: Download SenseVoice model (~226 MB, not in repo)
+        run: |
+          mkdir -p android/app/src/main/assets/sense-voice
+          curl -sSL "https://github.com/k2-fsa/sherpa-onnx/releases/download/asr-models/sherpa-onnx-sense-voice-zh-en-ja-ko-yue-int8-2024-07-17.tar.bz2" -o /tmp/model.tar.bz2
+          tar -xjf /tmp/model.tar.bz2 -C /tmp
+          cp /tmp/sherpa-onnx-sense-voice-zh-en-ja-ko-yue-int8-2024-07-17/model.int8.onnx android/app/src/main/assets/sense-voice/
+          ls -la android/app/src/main/assets/sense-voice/
+
+      - name: Build Release APK
+        working-directory: android
+        run: |
+          chmod +x gradlew
+          ./gradlew assembleRelease --no-daemon
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: app-release-apk
+          path: android/app/build/outputs/apk/release/app-release.apk
+          retention-days: 14
+
+  windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - uses: Swatinem/rust-cache@v2
+
+      - name: Install WiX v7
+        shell: pwsh
+        run: |
+          dotnet tool install -g wix
+          Add-Content $env:GITHUB_PATH "$env:USERPROFILE\.dotnet\tools"
+          wix eula accept wix7
+          wix extension add WixToolset.UI.wixext
+
+      - name: Build vrc-server
+        shell: pwsh
+        run: cargo build --release --manifest-file pc/windows-server/Cargo.toml
+
+      - name: Build vrc-admin (Tauri)
+        shell: pwsh
+        run: cargo build --release --manifest-file pc/tauri-admin/src-tauri/Cargo.toml
+
+      - name: Build MSI
+        shell: pwsh
+        run: powershell -NoProfile -ExecutionPolicy Bypass -File pc/packaging/build-msi.ps1
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: DeskLink-Setup-msi
+          path: pc/packaging/out/DeskLink-Setup-0.1.0.msi
+          retention-days: 14
+
+  release:
+    needs: [android, windows]
+    if: startsWith(github.ref, 'refs/tags/')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: dist
+
+      - name: Create Release with APK + MSI
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release create "${{ github.ref_name }}" \
+            --title "桌链 DeskLink ${{ github.ref_name }}" \
+            --generate-notes \
+            dist/app-release-apk/app-release.apk \
+            dist/DeskLink-Setup-msi/DeskLink-Setup-0.1.0.msi
