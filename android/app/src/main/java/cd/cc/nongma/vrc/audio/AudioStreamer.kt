@@ -13,7 +13,6 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import java.util.Base64
 import java.util.concurrent.atomic.AtomicBoolean
 
 object AudioStreamer {
@@ -72,8 +71,6 @@ object AudioStreamer {
                 if (read > 0) {
                     val bytes = buf.copyOf(read)
                     synchronized(pcmBuffer) { pcmBuffer.add(bytes) }
-                    val b64 = Base64.getEncoder().encodeToString(bytes)
-                    VrcWebSocket.sendAudioChunk(b64)
                     // RMS 电平（i16 小端），归一化 + 指数平滑喂给声波动效
                     val count = read / 2
                     if (count > 0) {
@@ -110,7 +107,7 @@ object AudioStreamer {
             it.release()
         }
         record = null
-        // 快照本次 PCM（推流给 PC 的同时，留一份给手机端识别）
+        // 快照本次 PCM（仅供手机端本地识别，不再推流给 PC）
         val pcmBytes = synchronized(pcmBuffer) {
             val total = pcmBuffer.sumOf { it.size }
             val out = ByteArray(total)
@@ -129,16 +126,16 @@ object AudioStreamer {
                 VrcWebSocket.notifyProcessing()
                 AsrRecognizer.recognizeAsync(ctx, pcmBytes) { text ->
                     if (!text.isNullOrBlank()) {
-                        // 识别成功：只发送文本，不让 PC 再跑 Whisper（server 收到 voice_command 会清空推流缓冲）
+                        // 识别成功：发送文本，PC 直接执行指令
                         VrcWebSocket.sendVoiceCommand(text)
                     } else {
-                        // 端侧识别失败/未识别出文字：回退 PC whisper
-                        VrcWebSocket.sendEndOfSpeech()
+                        // 端侧识别失败/没识别到文字：本地提示，不请求 PC 兜底
+                        VrcWebSocket.notifyAsrFailed()
                     }
                 }
             } else {
-                // 太短或没采到上下文：走 PC whisper 路径（它有自己的静音检测）
-                VrcWebSocket.sendEndOfSpeech()
+                // 太短或没采到上下文：本地提示重新说话
+                VrcWebSocket.notifyAsrFailed()
             }
         }
     }
@@ -187,7 +184,7 @@ object AudioStreamer {
         return out
     }
 
-    /** 取消本次聆听（不发送 end_of_speech，直接复位到 Idle） */
+    /** 取消本次聆听（不做识别，直接复位到 Idle） */
     fun cancel() {
         _recording.value = false
         _level.value = 0f

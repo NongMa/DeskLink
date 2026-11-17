@@ -18,7 +18,7 @@ import kotlinx.coroutines.launch
  * 由 sherpa-onnx 的 AssetManager 直接加载，无需复制到 filesDir。
  * 首次 decode 前约 1~3 秒的模型加载在 initAsync 预热里完成。
  *
- * 任何一步失败都会返回 null，调用方回退到 PC 端 Whisper（推流音频）识别。
+ * 任何一步失败都会返回 null，调用方给出本地「没听清」提示。
  */
 object AsrRecognizer {
     private const val TAG = "AsrRecognizer"
@@ -61,7 +61,7 @@ object AsrRecognizer {
                     .also { recognizer = it }
                     .also { Log.i(TAG, "SenseVoice recognizer ready") }
             } catch (t: Throwable) {
-                Log.e(TAG, "recognizer init failed; will fall back to PC whisper", t)
+                Log.e(TAG, "recognizer init failed", t)
                 initFailed = true
                 null
             }
@@ -70,7 +70,7 @@ object AsrRecognizer {
 
     /**
      * 识别 PCM16（小端、16kHz 单声道）音频。
-     * @return 识别文本（已 trim）；识别失败/无结果返回 null（调用方回退 PC whisper）
+     * @return 识别文本（已 trim）；识别失败/无结果返回 null（调用方给出本地「没听清」提示）
      */
     fun recognizeAsync(context: Context, pcm16: ByteArray, onResult: (String?) -> Unit) {
         CoroutineScope(Dispatchers.Default).launch {

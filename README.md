@@ -13,6 +13,6 @@
 
 ## 第三方许可
 
-- scrcpy（Apache 2.0，原样分发）、Google platform-tools（adb）、whisper.cpp（MIT）
+- scrcpy（Apache 2.0，原样分发）、Google platform-tools（adb）
 - sherpa-onnx、SenseVoice（端侧语音识别，随 APK 分发）
 - WiX Toolset v7（仅打包期间使用；年收入 >$10k 的组织须赞助 wixtoolset，个人/自用无碍）

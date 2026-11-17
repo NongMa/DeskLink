@@ -1,17 +1,10 @@
-//! 服务端共享状态：配置快照 + 已连接设备 + Whisper 就绪标记
+//! 服务端共享状态：配置快照 + 已连接设备
 
 use std::collections::HashMap;
 use std::net::UdpSocket;
-use std::sync::atomic::{AtomicU8, Ordering};
+use std::sync::atomic::Ordering;
 use std::sync::{Arc, Mutex};
 use std::time::Instant;
-
-/// whisper 状态：0=加载中/未开始, 1=就绪, 2=失败
-pub static WHISPER_STATE: AtomicU8 = AtomicU8::new(0);
-
-pub fn whisper_state() -> u8 {
-    WHISPER_STATE.load(Ordering::Relaxed)
-}
 
 #[derive(Clone)]
 pub struct ClientConn {

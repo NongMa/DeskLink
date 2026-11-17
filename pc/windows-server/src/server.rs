@@ -7,24 +7,17 @@ use axum::{
 };
 use futures::StreamExt;
 use serde::Deserialize;
-use base64::Engine as _;
-use base64::engine::general_purpose::STANDARD as BASE64;
 use std::collections::HashMap;
 use std::net::SocketAddr;
 use std::sync::Arc;
-use std::sync::atomic::{AtomicBool, Ordering};
 
 use crate::state::AppState;
-
-// 防止重复触发导致 Whisper 任务堆积（一次识别会占满 CPU，堆积后永远等不到结果）
-static WHISPER_BUSY: AtomicBool = AtomicBool::new(false);
 
 #[derive(Deserialize)]
 struct ClientMessage {
     #[serde(rename = "type")]
     msg_type: String,
     action: Option<String>,
-    data: Option<String>,
     // 鼠标控制字段
     dx: Option<i32>,
     dy: Option<i32>,
@@ -119,7 +112,6 @@ async fn ws_handler(
         let conn = st.register_client(peer.to_string());
         log::info!("client #{} connected from {}", conn.id, conn.peer);
         let kill = conn.kill.clone();
-        let mut audio_buf: Vec<i16> = Vec::new();
         loop {
             tokio::select! {
                 _ = kill.notified() => {
@@ -195,21 +187,8 @@ async fn ws_handler(
                                         }
                                     }
                                 }
-                                "audio_chunk" => {
-                                    if let Some(data) = parsed.data {
-                                        if let Ok(bytes) = BASE64.decode(data) {
-                                            for chunk in bytes.chunks(2) {
-                                                if chunk.len() == 2 {
-                                                    let s = i16::from_le_bytes([chunk[0], chunk[1]]);
-                                                    audio_buf.push(s);
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
                                 "voice_command" => {
-                                    // 手机端已完成识别：丢弃推流过来的音频，直接用识别文字执行指令
-                                    audio_buf.clear();
+                                    // 手机端已完成识别：直接用识别文字执行指令
                                     let text = parsed.text.clone().unwrap_or_default().trim().to_string();
                                     log::info!("voice_command (phone asr): {text}");
                                     let action = crate::audio::parse_and_execute(&text);
@@ -224,89 +203,6 @@ async fn ws_handler(
                                         ),
                                     };
                                     let _ = socket.send(axum::extract::ws::Message::Text(reply)).await;
-                                }
-                                "end_of_speech" => {
-                                    log::info!("end_of_speech: {} samples (~{} ms)", audio_buf.len(), audio_buf.len() as f32 / 16.0);
-                                    // 上限：只保留最长 30 秒（命令语音一般很短），避免超长音频把 CPU 拖死
-                                    const MAX_SAMPLES: usize = 480_000;
-                                    if audio_buf.len() > MAX_SAMPLES {
-                                        audio_buf.truncate(MAX_SAMPLES);
-                                    }
-                                    // 静音/过短检测：能量太低时跳过 Whisper，避免对空气胡乱解码、
-                                    // 触发数分钟的无效推理和幻觉文本
-                                    let is_effectively_silent = audio_buf.len() < 4_800 /* < 300ms */ || {
-                                        let sum: f64 = audio_buf.iter().map(|&s| (s as f64) * (s as f64)).sum();
-                                        (sum / audio_buf.len() as f64).sqrt() < 150.0 // RMS 振幅阈值
-                                    };
-                                    if is_effectively_silent {
-                                        log::info!("audio effectively silent ({} samples), skipping whisper", audio_buf.len());
-                                        audio_buf.clear();
-                                        let _ = socket.send(axum::extract::ws::Message::Text(
-                                            r#"{"type":"command","action":"none","text":"未检测到人声"}"#.into(),
-                                        )).await;
-                                        continue;
-                                    }
-                                    // 上一个识别还没结束时，拒绝新任务而不是堆积
-                                    if WHISPER_BUSY.swap(true, Ordering::SeqCst) {
-                                        log::warn!("whisper busy, dropping new request");
-                                        audio_buf.clear();
-                                        let _ = socket.send(axum::extract::ws::Message::Text(
-                                            r#"{"type":"error","message":"正在识别，请稍候"}"#.into(),
-                                        )).await;
-                                        continue;
-                                    }
-                                    let buf = std::mem::take(&mut audio_buf);
-                                    // Whisper 是 CPU 密集型且会用较深的调用栈，放到带大栈的专用线程里跑，
-                                    // 避免卡住 WS 读循环，也避开 tokio 阻塞线程池的栈限制
-                                    let (tx, rx) = tokio::sync::oneshot::channel();
-                                    let spawn_res = std::thread::Builder::new()
-                                        .name("whisper-worker".to_string())
-                                        .stack_size(64 * 1024 * 1024)
-                                        .spawn(move || {
-                                            let _ = tx.send(crate::audio::recognize_pcm_i16(&buf));
-                                        });
-                                    let result = match spawn_res {
-                                        Ok(_) => rx.await,
-                                        Err(e) => {
-                                            log::error!("failed to spawn whisper worker: {e}");
-                                            WHISPER_BUSY.store(false, Ordering::SeqCst);
-                                            let _ = socket.send(axum::extract::ws::Message::Text(
-                                                format!(r#"{{"type":"error","message":"recognize worker spawn failed: {}"}}"#, json_escape(&e.to_string())).into(),
-                                            )).await;
-                                            continue;
-                                        }
-                                    };
-                                    WHISPER_BUSY.store(false, Ordering::SeqCst);
-
-                                    match result {
-                                        Ok(Ok(text)) => {
-                                            log::info!("recognized: {text}");
-                                            let action = crate::audio::parse_and_execute(&text);
-                                            let reply = match action {
-                                                Some(a) => format!(
-                                                    r#"{{"type":"command","action":"{a}","text":"{}"}}"#,
-                                                    json_escape(&text)
-                                                ),
-                                                None => format!(
-                                                    r#"{{"type":"command","action":"none","text":"{}"}}"#,
-                                                    json_escape(&text)
-                                                ),
-                                            };
-                                            let _ = socket.send(axum::extract::ws::Message::Text(reply)).await;
-                                        }
-                                        Ok(Err(e)) => {
-                                            log::error!("recognize failed: {e:#}");
-                                            let _ = socket.send(axum::extract::ws::Message::Text(
-                                                format!(r#"{{"type":"error","message":"{}"}}"#, json_escape(&format!("{e:#}"))),
-                                            )).await;
-                                        }
-                                        Err(e) => {
-                                            log::error!("recognize task panicked: {e}");
-                                            let _ = socket.send(axum::extract::ws::Message::Text(
-                                                r#"{"type":"error","message":"recognize task failed"}"#.into(),
-                                            )).await;
-                                        }
-                                    }
                                 }
                                 "ping" => {
                                     let _ = socket.send(axum::extract::ws::Message::Text(

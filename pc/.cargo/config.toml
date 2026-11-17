@@ -1,5 +1,0 @@
-# whisper-rs-sys 需要 cmake 来编译 whisper.cpp。
-# 本机 PATH 没有 cmake，但 Visual Studio BuildTools 自带了一份，这里直接指向它。
-# （同时保留 windows-server/.cargo/config.toml，从 windows-server 目录直接跑 cargo 也能生效）
-[env]
-CMAKE = "C:\\Program Files (x86)\\Microsoft Visual Studio\\2022\\BuildTools\\Common7\\IDE\\CommonExtensions\\Microsoft\\CMake\\CMake\\bin\\cmake.exe"

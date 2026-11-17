@@ -7,7 +7,6 @@ description = "Voice Remote Control – Windows agent. Sends keyboard/mouse/medi
 [dependencies]
 tokio = { version = "1", features = ["full"] }
 axum = { version = "0.7", features = ["ws"] }
-base64 = "0.22"
 tower-http = { version = "0.5", features = ["cors"] }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
@@ -15,10 +14,8 @@ futures = "0.3"
 winapi = { version = "0.3", features = ["winuser", "shellapi", "winreg", "wingdi", "winbase", "libloaderapi", "winnt"] }
 # UI Automation：检测前台输入框焦点状态（语音「转文字输入 / 指令识别」切换依据）
 uiautomation = "0.25"
-whisper-rs = "0.16"
 windows = { version = "0.58", features = ["Win32_System_Diagnostics", "Win32_Graphics_Gdi", "Win32_System_Registry"] }
 anyhow = "1"
-zhconv = { version = "0.4.2", default-features = false, features = ["compress", "opencc"] }
 log = "0.4"
 time = { version = "0.3", features = ["formatting"] }
 # 托盘图标 / 管理页 QR / token 生成

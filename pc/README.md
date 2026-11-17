@@ -17,7 +17,7 @@ scrcpy 投屏回传、手机文件管理。
 - `input.rs` 键盘 / 鼠标 / 媒体键注入；`panel.rs` 侧面板指令
 - `mirror.rs` scrcpy 投屏编排（`vendor/scrcpy`，未修改源码）
 - `fileman.rs` 手机文件管理（adb）；`appcat.rs` 应用分类
-- `audio.rs` + whisper-rs：手机端未识别时的 PC Whisper 兜底（模型在 `models/`）
+- `audio.rs` 语音指令解析与派发（识别在手机端 sherpa-onnx + SenseVoice 完成，PC 端只执行）
 - `tray.rs` 托盘（`assets/vrc.ico` 双环相链，编译期嵌入）；`autostart.rs` HKCU Run 自启（默认关）
 - `state.rs` / `config.rs` / `logbuf.rs` / `main.rs`
 
@@ -28,7 +28,6 @@ scrcpy 投屏回传、手机文件管理。
 ```
 vrc-server.exe        嵌入 PE 图标（build.rs + embed-resource 编译期嵌入 assets/vrc.ico）
 vrc-admin.exe
-models\ggml-small-q5_1.bin
 vendor\scrcpy\…              scrcpy 5.0.1 原样分发
 vendor\platform-tools\…      adb 1.0.41
 ```
@@ -44,7 +43,7 @@ vendor\platform-tools\…      adb 1.0.41
 # 0. PATH 前置 cargo（避免 ServBay/rustup 混排）
 $env:PATH = "C:\Users\$env:USERNAME\.cargo\bin;" + $env:PATH
 
-# 1. vrc-server（whisper-rs-sys 需 cmake；pc/.cargo/config.toml 已指向 VS BuildTools 自带 cmake）
+# 1. vrc-server
 cargo build --release --manifest-file pc\windows-server\Cargo.toml
 
 # 2. vrc-admin（Tauri v2，bundle 关闭，只产出 exe）
@@ -59,15 +58,8 @@ powershell -NoProfile -ExecutionPolicy Bypass -File pc\packaging\build-msi.ps1
 
 ## 大文件（不入 git，获取方式）
 
-- `pc/windows-server/models/*.bin`：whisper.cpp 量化模型，从 huggingface `ggerganov/whisper.cpp`
-  下载（如 `ggml-small-q5_1.bin`），放入 `windows-server/models/`
 - `pc/windows-server/vendor/`：scrcpy 5.0.1 + Google platform-tools，见
   `pc/windows-server/vendor/README.md`
-
-## 命名红线
-
-见根 `README.md`：可见文案只用「桌链 / DeskLink」；applicationId / exe 名 /
-`vrc://` / 注册表 Run 项 / `%APPDATA%\VoiceRemoteControl` 一律不动。
 
 ## 已知取舍
 
@@ -75,4 +67,3 @@ powershell -NoProfile -ExecutionPolicy Bypass -File pc\packaging\build-msi.ps1
 - `wix msi validate` 仅 ICE91 22 条（per-machine 装 LocalAppData 的固有警告，可接受）；
   ICE38/ICE64 已用 HKCU KeyPath + RemoveFolder 规避
 - 产品码每构建变化，升级靠固定 UpgradeCode
-- `pc/.cargo/config.toml` 与 `pc/windows-server/.cargo/config.toml` 的 CMAKE 路径是本机路径

@@ -161,7 +161,7 @@ body {
 }
 .hb-pill .dot { width: 8px; height: 8px; border-radius: 50%; background: #4ADE80; box-shadow: 0 0 8px rgba(74,222,128,.9); }
 /* 概览：统计卡 */
-.stat-grid { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 16px; margin-top: 18px; }
+.stat-grid { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 16px; margin-top: 18px; }
 .stat { position: relative; padding: 20px 20px 16px; }
 .stat::before { content: ""; position: absolute; top: 0; left: 20px; width: 34px; height: 4px; border-radius: 0 0 4px 4px; background: var(--accent); }
 .stat-grid > .stat:nth-child(2)::before { background: #8B5CF6; }
@@ -526,11 +526,6 @@ select:focus, input[type=text]:focus { border-color: var(--accent); box-shadow: 
         <div class="stat-foot">手机按住麦克风即可下发指令</div>
       </div>
       <div class="glass stat">
-        <div class="stat-label">Whisper 识别</div>
-        <div class="stat-value" id="whisperState">—</div>
-        <div class="stat-foot">手机端离线识别失败时的 PC 兜底</div>
-      </div>
-      <div class="glass stat">
         <div class="stat-label">运行时长</div>
         <div class="stat-value" id="uptime">—</div>
         <div class="stat-foot">服务状态 · <span id="svcState">—</span></div>
@@ -829,10 +824,6 @@ select:focus, input[type=text]:focus { border-color: var(--accent); box-shadow: 
         <div><div class="row-title">端侧离线（主力）</div><div class="row-sub">sherpa-onnx 2.0.1 + SenseVoice small int8 · 手机本地解码，松手即出文字；录音中每 700ms 分块重解码，实时上屏转写</div></div>
       </div>
       <div class="row-item">
-        <div class="row-ic"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.6"/><path d="M12 7.5v4.6l3 2"/></svg></div>
-        <div><div class="row-title">PC 兜底识别</div><div class="row-sub">whisper.cpp（whisper-rs 0.16）· ggml-small-q5_1.bin · 端侧失败时才走局域网</div></div>
-      </div>
-      <div class="row-item">
         <div class="row-ic"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.6"/><path d="M8.5 12.5 12 9l3.5 3.5M12 9v6"/></svg></div>
         <div><div class="row-title">意图执行</div><div class="row-sub">音频指令 → PC 解析（前缀剥离 + 中文短语映射）→ 键盘 / 媒体 / 启动应用；「打开〈应用〉」先查本机动态目录（开始菜单 / 桌面快捷方式 / UWP 清单，缓存 7 天）再回落内置别名 → App Paths → PATH</div></div>
       </div>
@@ -853,12 +844,8 @@ select:focus, input[type=text]:focus { border-color: var(--accent); box-shadow: 
         <div><div class="row-title">手机端离线识别</div><div class="row-sub"><span class="mono">sherpa-onnx 2.0.1</span> + SenseVoice small int8 · app/libs/ 本地 AAR<br>录音中每 700ms 分块重解码，松手即出文字</div></div>
       </div>
       <div class="row-item">
-        <div class="row-ic"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.6"/><path d="M12 7.5v4.6l3 2"/></svg></div>
-        <div><div class="row-title">PC 兜底识别</div><div class="row-sub"><span class="mono">whisper-rs 0.16</span> · whisper.cpp <span class="mono">ggml-small-q5_1.bin</span>（models/）<br>端侧失败时才走局域网；同目录另有 tiny / large-turbo 量化模型</div></div>
-      </div>
-      <div class="row-item">
         <div class="row-ic"><svg viewBox="0 0 24 24"><path d="M5 5h14M5 12h14M5 19h8"/></svg></div>
-        <div><div class="row-title">其它开源组件</div><div class="row-sub"><span class="mono">axum / tower-http / tokio / serde / winapi / windows-rs / whisper.cpp / zhconv 0.4.2 / time · AndroidLiquidGlass（MIT）</span></div></div>
+        <div><div class="row-title">其它开源组件</div><div class="row-sub"><span class="mono">axum / tower-http / tokio / serde / winapi / windows-rs / time · AndroidLiquidGlass（MIT）</span></div></div>
       </div>
     </div>
 
@@ -898,7 +885,7 @@ select:focus, input[type=text]:focus { border-color: var(--accent); box-shadow: 
       </div>
     </div>
 
-    <div class="foot">桌链 DeskLink · vrc-server <span id="verFoot">v—</span> · © 2026 · 开源组件：scrcpy / Google adb / axum / tokio / winapi / whisper.cpp / sherpa-onnx / AndroidLiquidGlass / backdrop</div>
+    <div class="foot">桌链 DeskLink · vrc-server <span id="verFoot">v—</span> · © 2026 · 开源组件：scrcpy / Google adb / axum / tokio / winapi / sherpa-onnx / AndroidLiquidGlass / backdrop</div>
   </section>
 
 </main>
@@ -950,7 +937,6 @@ function fmtUptime(sec) {
   if (m) return m + " 分钟 " + s + " 秒";
   return s + " 秒";
 }
-const WHISPER = { 0: ["未初始化", "warn-text"], 1: ["就绪", "ok-text"], 2: ["失败", "err-text"] };
 
 async function fetchStatus() {
   try {
@@ -970,10 +956,6 @@ async function fetchStatus() {
     $("clientCount").textContent = String(st.clients);
     $("uptime").textContent = fmtUptime(st.uptime_sec);
     $("svcState").textContent = "运行中";
-    const [wText, wCls] = WHISPER[st.whisper_state] || ["未知(" + st.whisper_state + ")", "warn-text"];
-    const wEl = $("whisperState");
-    wEl.textContent = wText;
-    wEl.className = "stat-value " + wCls;
     // 诊断块（不含令牌/配置内容）
     const diag = [
       "桌链 DeskLink 诊断信息",
@@ -982,7 +964,6 @@ async function fetchStatus() {
       "本机: " + (st.device_name || "未命名电脑") + " (" + st.lan_ip + ":" + st.port + ")",
       "WS: " + st.ws_url,
       "WS 认证: " + (st.auth_required ? "开启" : "关闭"),
-      "Whisper 兜底: " + (WHISPER[st.whisper_state] ? WHISPER[st.whisper_state][0] : "未知"),
       "在线设备: " + st.clients + " 台",
       "运行时长: " + fmtUptime(st.uptime_sec),
       "配置: %APPDATA%\\VoiceRemoteControl\\config.json",
@@ -991,7 +972,6 @@ async function fetchStatus() {
     $("diagPre").textContent = diag;
   } catch (e) {
     $("svcState").textContent = "无法连接服务";
-    $("whisperState").textContent = "—";
     $("diagPre").textContent = "无法连接本机服务（127.0.0.1:8765）";
   }
 }

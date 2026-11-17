@@ -73,7 +73,7 @@ object VrcWebSocket {
         _inputMode.value = mode
     }
 
-    /** 松手后进入识别中（无论走手机端还是 PC 端识别都先置为 Processing） */
+    /** 松手后进入识别中 */
     fun notifyProcessing() {
         _voicePartial.value = ""
         if (_voicePhase.value == VoicePhase.Listening || _voicePhase.value == VoicePhase.Idle) {
@@ -84,7 +84,16 @@ object VrcWebSocket {
     private fun jsonEscape(s: String): String =
         s.replace("\\", "\\\\").replace("\"", "\\\"").replace("\n", "\\n").replace("\r", "\\r")
 
-    /** 手机端识别出文字后发给 PC 执行（PC 不再跑 Whisper） */
+    /** 手机端没识别到语音/识别失败：本地提示，不请求 PC 兜底 */
+    fun notifyAsrFailed() {
+        _voicePartial.value = ""
+        _voicePhase.value = VoicePhase.Result
+        _voiceTitle.value = "（未听清）"
+        _voiceSubtitle.value = "没识别到语音，请靠近手机再说一遍"
+        _lastMessage.value = "没识别到语音"
+    }
+
+    /** 手机端识别出文字后发给 PC 执行 */
     fun sendVoiceCommand(text: String) {
         val socket = ws
         if (socket == null || _status.value != ConnectionStatus.Connected) {
@@ -258,8 +267,6 @@ object VrcWebSocket {
 
     private fun handleServerMessage(text: String) {
         when {
-            // 音频帧 ACK 不刷新 UI
-            text.contains("\"status\":\"ok\"") -> Unit
             // pong 心跳确认，忽略
             text.contains("\"type\":\"pong\"") -> Unit
             // PC 输入焦点状态（来自 focus_check）：仅在 false→true 转换时把模式重置为 Text（默认）
@@ -390,10 +397,6 @@ object VrcWebSocket {
         _lastMessage.value = "执行: $action"
     }
 
-    fun sendAudioChunk(base64Pcm: String) {
-        ws?.send(encodeJson(mapOf("type" to "audio_chunk", "data" to base64Pcm)))
-    }
-
     fun sendMouseMove(dx: Int, dy: Int) {
         ws?.send("{\"type\":\"mouse\",\"dx\":$dx,\"dy\":$dy}")
     }
@@ -409,20 +412,5 @@ object VrcWebSocket {
     /** 回车键（对话框「确定」） */
     fun sendEnter() {
         sendControl("enter")
-    }
-
-    fun sendEndOfSpeech() {
-        val socket = ws
-        if (socket == null || _status.value != ConnectionStatus.Connected) {
-            _voicePhase.value = VoicePhase.Error
-            _voiceTitle.value = "未连接到电脑"
-            _voiceSubtitle.value = "请先连接电脑后再试"
-            _lastMessage.value = "错误: 未连接到电脑"
-            return
-        }
-        socket.send(encodeJson(mapOf("type" to "end_of_speech")))
-        if (_voicePhase.value == VoicePhase.Listening) {
-            _voicePhase.value = VoicePhase.Processing
-        }
     }
 }

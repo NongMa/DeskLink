@@ -18,7 +18,6 @@ mod panel;
 mod fileman;
 
 use std::sync::Arc;
-use state::WHISPER_STATE;
 
 const PORT: u16 = 8765;
 
@@ -38,7 +37,7 @@ fn main() {
     // 后台预热：动态应用目录（本机快捷方式 + UWP），供「打开<应用>」语音指令查找
     appcat::warmup_async();
 
-    // 后台线程：tokio 运行时（WS 服务 + whisper 预热）
+    // 后台线程：tokio 运行时（WS 服务）
     let server_state = Arc::clone(&state);
     std::thread::Builder::new()
         .name("vrc-runtime".to_string())
@@ -55,27 +54,6 @@ fn main() {
                 }
             };
             rt.block_on(async move {
-                // 后台预热：加载 whisper 模型并跑一次空音频识别，
-                // 把首次加载的卡顿挪到启动期，同时暴露失败/卡死情况
-                std::thread::Builder::new()
-                    .name("whisper-warmup".to_string())
-                    .stack_size(64 * 1024 * 1024)
-                    .spawn(|| {
-                        let t = std::time::Instant::now();
-                        log::info!("whisper pre-warm started");
-                        match crate::audio::recognize_pcm_i16(&vec![0i16; 16_000]) {
-                            Ok(text) => {
-                                WHISPER_STATE.store(1, std::sync::atomic::Ordering::Relaxed);
-                                log::info!("whisper pre-warm done in {:?} (text={text:?})", t.elapsed());
-                            }
-                            Err(e) => {
-                                WHISPER_STATE.store(2, std::sync::atomic::Ordering::Relaxed);
-                                log::error!("whisper pre-warm failed in {:?}: {e:#}", t.elapsed());
-                            }
-                        }
-                    })
-                    .ok();
-
                 let addr = std::net::SocketAddr::from(([0, 0, 0, 0], PORT));
                 let listener = match tokio::net::TcpListener::bind(addr).await {
                     Ok(l) => l,

@@ -13,7 +13,7 @@ use axum::{
 use serde::Deserialize;
 use serde_json::json;
 
-use crate::state::{whisper_state, AppState};
+use crate::state::AppState;
 
 /// 仅允许本机回环地址访问管理页（电脑本人操作，不暴露给局域网）
 fn is_loopback(addr: &SocketAddr) -> bool {
@@ -49,7 +49,6 @@ pub async fn api_status(
         "port": st.port,
         "ws_url": format!("ws://{}:{}/ws", st.lan_ip, st.port),
         "uptime_sec": st.start.elapsed().as_secs(),
-        "whisper_state": whisper_state(),
         "clients": clients,
         "auth_required": st.auth_required(),
         "autostart": crate::autostart::is_enabled(),

@@ -1,6 +1,6 @@
 ﻿# 桌链 DeskLink MSI 打包脚本（WiX v7）
 # 布局：%LOCALAPPDATA%\Programs\DeskLink\
-#   vrc-server.exe / vrc-admin.exe / models\ggml-small-q5_1.bin
+#   vrc-server.exe / vrc-admin.exe
 #   vendor\scrcpy\... / vendor\platform-tools\...
 # 开始菜单快捷方式 -> vrc-server.exe（托盘 agent）
 # per-machine 安装（WiX 自动置 ALLUSERS=1，双击弹 UAC 后显示分步向导）
@@ -11,12 +11,11 @@ $serverDir = Join-Path $root "windows-server"
 $tauriExe  = Join-Path $root "tauri-admin\src-tauri\target\release\vrc-admin.exe"
 $serverExe = Join-Path $serverDir "target\release\vrc-server.exe"
 $vendorDir = Join-Path $serverDir "vendor"
-$modelFile = Join-Path $serverDir "models\ggml-small-q5_1.bin"
 $outDir    = Join-Path $root "packaging\out"
 $wxsPath   = Join-Path $root "packaging\DeskLink.wxs"
 $msiPath   = Join-Path $outDir "DeskLink-Setup-0.1.0.msi"
 
-foreach ($f in @($tauriExe, $serverExe, $modelFile)) {
+foreach ($f in @($tauriExe, $serverExe)) {
     if (-not (Test-Path $f)) { Write-Error "缺少文件: $f" }
 }
 New-Item -ItemType Directory -Force -Path $outDir | Out-Null
@@ -98,13 +97,6 @@ $(RegKey "Vendor" 12)
               <RemoveFolder Id="rm_VendorPlatformTools" Directory="dir_vendor_platformtools" On="uninstall" />
             </Component>
           </Directory>
-          <Directory Id="dir_models" Name="models">
-            <Component Id="cmp_dir_models" Guid="{F6789012-3456-7890-CDEF-0123456789AB}">
-$(RegKey "Models" 14)
-              <RemoveFolder Id="rm_Models" Directory="dir_models" On="uninstall" />
-              <File Id="fil_model" Source="$modelFile" />
-            </Component>
-          </Directory>
         </Directory>
       </Directory>
     </StandardDirectory>
@@ -130,7 +122,6 @@ $(RegKey "Models" 14)
       <ComponentRef Id="cmp_dir_vendor" />
       <ComponentRef Id="cmp_dir_vendor_scrcpy" />
       <ComponentRef Id="cmp_dir_vendor_platformtools" />
-      <ComponentRef Id="cmp_dir_models" />
       <ComponentRef Id="cmp_StartMenuShortcut" />
       <ComponentRef Id="cmp_DesktopShortcut" />
     </Feature>

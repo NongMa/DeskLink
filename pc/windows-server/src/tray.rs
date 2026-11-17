@@ -352,16 +352,11 @@ unsafe fn show_menu(hwnd: HWND) {
     }
     // 状态行（置灰不可点）
     let clients = st.clients().len();
-    let whisper = match crate::state::whisper_state() {
-        1 => "Whisper 就绪",
-        2 => "Whisper 加载失败",
-        _ => "Whisper 加载中…",
-    };
     menu_item(
         menu,
         MF_STRING | MF_DISABLED | MF_GRAYED,
         0,
-        &format!("{}:{} · 已连接 {} 台 · {}", st.lan_ip, st.port, clients, whisper),
+        &format!("{}:{} · 已连接 {} 台", st.lan_ip, st.port, clients),
     );
     menu_item(menu, MF_SEPARATOR, 0, "");
     menu_item(menu, MF_STRING, ID_OPEN, "打开管理页(&O)");
