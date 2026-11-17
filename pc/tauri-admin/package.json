@@ -1,0 +1,13 @@
+{
+  "name": "vrc-admin",
+  "private": true,
+  "version": "0.1.0",
+  "description": "VoiceRemoteControl 管理端（Tauri 桌面窗口）",
+  "type": "module",
+  "scripts": {
+    "tauri": "tauri"
+  },
+  "devDependencies": {
+    "@tauri-apps/cli": "^2"
+  }
+}

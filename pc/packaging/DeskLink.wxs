@@ -1,0 +1,88 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs" xmlns:ui="http://wixtoolset.org/schemas/v4/wxs/ui">
+  <Package Name="桌链 DeskLink" Manufacturer="DeskLink" Version="0.1.0" Codepage="65001"
+           UpgradeCode="{3f1a2b7c-9d4e-4f6a-8b2c-1e5d7a9c0f31}"
+           InstallerVersion="500">
+    <WixVariable Id="WixUILicenseRtf" Value="F:\AI Project\VoiceRemoteControl\packaging\LICENSE.rtf" />
+    <Icon Id="icon_vrc" SourceFile="F:\AI Project\VoiceRemoteControl\windows-server\assets\vrc.ico" />
+    <Property Id="ARPPRODUCTICON" Value="icon_vrc" />
+    <MajorUpgrade DowngradeErrorMessage="已安装更新版本，请先卸载旧版。" />
+    <MediaTemplate EmbedCab="yes" />
+    <ui:WixUI Id="WixUI_InstallDir" InstallDirectory="INSTALLFOLDER" />
+    <StandardDirectory Id="LocalAppDataFolder">
+      <Directory Id="LocalAppDataProgramsFolder" Name="Programs">
+        <Directory Id="INSTALLFOLDER" Name="DeskLink">
+          <Component Id="cmp_Root" Guid="{C428A110-8B3A-4A5B-9D7E-F1A2B3C4D5E6}">
+            <RegistryValue Root="HKCU" Key="Software\DeskLink\Install" Name="Root" Type="integer" Value="1" KeyPath="yes" />
+            <File Id="fil_A0F788BAEBE54A01" Source="F:\AI Project\VoiceRemoteControl\windows-server\target\release\vrc-server.exe" />
+            <File Id="fil_2A89E183FFA84793" Source="F:\AI Project\VoiceRemoteControl\tauri-admin\src-tauri\target\release\vrc-admin.exe" />
+            <RemoveFolder Id="rm_Programs" Directory="LocalAppDataProgramsFolder" On="uninstall" />
+            <RemoveFolder Id="rm_Install" Directory="INSTALLFOLDER" On="uninstall" />
+          </Component>
+          <Directory Id="dir_vendor" Name="vendor">
+            <Directory Id="dir_vendor_scrcpy" Name="scrcpy">
+              <Component Id="cmp_dir_vendor_scrcpy" Guid="{B2345678-90EF-1234-ABCD-FEDCBA987654}">
+              <RegistryValue Root="HKCU" Key="Software\DeskLink\Install" Name="VendorScrcpy" Type="integer" Value="1" KeyPath="yes" />
+            <File Id="fil_A0F20AB3C9A5466E" Source="F:\AI Project\VoiceRemoteControl\windows-server\vendor\scrcpy\adb.exe" />
+            <File Id="fil_C5F93D51CBA94D5A" Source="F:\AI Project\VoiceRemoteControl\windows-server\vendor\scrcpy\AdbWinApi.dll" />
+            <File Id="fil_1B4170457E364546" Source="F:\AI Project\VoiceRemoteControl\windows-server\vendor\scrcpy\AdbWinUsbApi.dll" />
+            <File Id="fil_67E80E2B90DF42B1" Source="F:\AI Project\VoiceRemoteControl\windows-server\vendor\scrcpy\avcodec-63.dll" />
+            <File Id="fil_D2086831828C4450" Source="F:\AI Project\VoiceRemoteControl\windows-server\vendor\scrcpy\avformat-63.dll" />
+            <File Id="fil_90367A9B1BEC4CCF" Source="F:\AI Project\VoiceRemoteControl\windows-server\vendor\scrcpy\avutil-61.dll" />
+            <File Id="fil_5E39084A07B342A8" Source="F:\AI Project\VoiceRemoteControl\windows-server\vendor\scrcpy\disconnected.png" />
+            <File Id="fil_18FF2A33D4274284" Source="F:\AI Project\VoiceRemoteControl\windows-server\vendor\scrcpy\libusb-1.0.dll" />
+            <File Id="fil_8E8E91715C864114" Source="F:\AI Project\VoiceRemoteControl\windows-server\vendor\scrcpy\LICENSE.txt" />
+            <File Id="fil_40BCE324F21149FC" Source="F:\AI Project\VoiceRemoteControl\windows-server\vendor\scrcpy\open_a_terminal_here.bat" />
+            <File Id="fil_D55F29C1E02240AF" Source="F:\AI Project\VoiceRemoteControl\windows-server\vendor\scrcpy\scrcpy.exe" />
+            <File Id="fil_D606F365C38A4720" Source="F:\AI Project\VoiceRemoteControl\windows-server\vendor\scrcpy\scrcpy.png" />
+            <File Id="fil_8AAFA5CAF8154047" Source="F:\AI Project\VoiceRemoteControl\windows-server\vendor\scrcpy\scrcpy-noconsole.vbs" />
+            <File Id="fil_6A5015502895466E" Source="F:\AI Project\VoiceRemoteControl\windows-server\vendor\scrcpy\scrcpy-server" />
+            <File Id="fil_EB10154B57124F81" Source="F:\AI Project\VoiceRemoteControl\windows-server\vendor\scrcpy\SDL3.dll" />
+            <File Id="fil_1F07FD5DEF514CCE" Source="F:\AI Project\VoiceRemoteControl\windows-server\vendor\scrcpy\swresample-7.dll" />
+              </Component>
+            </Directory>
+            <Directory Id="dir_vendor_platformtools" Name="platform-tools">
+              <Component Id="cmp_dir_vendor_platformtools" Guid="{C3456789-0DEF-1234-5678-9ABCDEF01234}">
+              <RegistryValue Root="HKCU" Key="Software\DeskLink\Install" Name="VendorPlatformTools" Type="integer" Value="1" KeyPath="yes" />
+            <File Id="fil_F885F633B330417B" Source="F:\AI Project\VoiceRemoteControl\windows-server\vendor\platform-tools\adb.exe" />
+            <File Id="fil_6C77392389984677" Source="F:\AI Project\VoiceRemoteControl\windows-server\vendor\platform-tools\AdbWinApi.dll" />
+            <File Id="fil_FAC4FCC3C82E4603" Source="F:\AI Project\VoiceRemoteControl\windows-server\vendor\platform-tools\AdbWinUsbApi.dll" />
+              </Component>
+            </Directory>
+            <Component Id="cmp_dir_vendor" Guid="{E5678901-2345-6789-BCDE-F0123456789A}">
+            <RegistryValue Root="HKCU" Key="Software\DeskLink\Install" Name="Vendor" Type="integer" Value="1" KeyPath="yes" />
+              <RemoveFolder Id="rm_Vendor" Directory="dir_vendor" On="uninstall" />
+              <RemoveFolder Id="rm_VendorScrcpy" Directory="dir_vendor_scrcpy" On="uninstall" />
+              <RemoveFolder Id="rm_VendorPlatformTools" Directory="dir_vendor_platformtools" On="uninstall" />
+            </Component>
+          </Directory>
+          <Directory Id="dir_models" Name="models">
+            <Component Id="cmp_dir_models" Guid="{F6789012-3456-7890-CDEF-0123456789AB}">
+              <RegistryValue Root="HKCU" Key="Software\DeskLink\Install" Name="Models" Type="integer" Value="1" KeyPath="yes" />
+              <RemoveFolder Id="rm_Models" Directory="dir_models" On="uninstall" />
+              <File Id="fil_model" Source="F:\AI Project\VoiceRemoteControl\windows-server\models\ggml-small-q5_1.bin" />
+            </Component>
+          </Directory>
+        </Directory>
+      </Directory>
+    </StandardDirectory>
+    <StandardDirectory Id="ProgramMenuFolder">
+      <Directory Id="ProgramMenuDeskLink" Name="桌链 DeskLink">
+        <Component Id="cmp_StartMenuShortcut" Guid="{D4567890-1234-5678-ABCD-EF0123456789}">
+          <RegistryValue Root="HKCU" Key="Software\DeskLink" Name="StartMenuShortcut" Type="integer" Value="1" KeyPath="yes" />
+          <Shortcut Id="scm_DeskLink" Name="桌链 DeskLink" Description="手机与 Windows 协同（语音 / 投屏 / 文件）"
+                    Target="[INSTALLFOLDER]vrc-server.exe" WorkingDirectory="INSTALLFOLDER" Icon="icon_vrc" />
+          <RemoveFolder Id="rm_StartMenuDeskLink" Directory="ProgramMenuDeskLink" On="uninstall" />
+        </Component>
+      </Directory>
+    </StandardDirectory>
+    <Feature Id="Main" Title="桌链 DeskLink" Level="1">
+      <ComponentRef Id="cmp_Root" />
+      <ComponentRef Id="cmp_dir_vendor" />
+      <ComponentRef Id="cmp_dir_vendor_scrcpy" />
+      <ComponentRef Id="cmp_dir_vendor_platformtools" />
+      <ComponentRef Id="cmp_dir_models" />
+      <ComponentRef Id="cmp_StartMenuShortcut" />
+    </Feature>
+  </Package>
+</Wix>

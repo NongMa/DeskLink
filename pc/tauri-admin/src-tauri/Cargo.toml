@@ -1,0 +1,18 @@
+[package]
+name = "vrc-admin"
+version = "0.1.0"
+description = "VoiceRemoteControl 管理端（Tauri 桌面窗口，承载本机 127.0.0.1:8765 管理页）"
+edition = "2021"
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = [] }
+
+[profile.release]
+panic = "abort"
+codegen-units = 1
+lto = true
+opt-level = "s"
+strip = true

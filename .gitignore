@@ -1,0 +1,32 @@
+# ===== 通用 =====
+*.log
+*.iml
+.DS_Store
+local.properties
+screen.png
+captures/
+.wix/
+
+# IDE / 构建缓存
+.idea/
+.gradle/
+.kotlin/
+build/
+
+# ===== pc/（PC 端）=====
+/pc/windows-server/target/
+/pc/windows-server/logs/
+/pc/tauri-admin/src-tauri/target/
+/pc/tauri-admin/src-tauri/target.old/
+/pc/tauri-admin/node_modules/
+/pc/packaging/out/
+
+# ===== 大体积二进制（不入 git；获取方式见各端 README）=====
+/pc/windows-server/models/*.bin
+/pc/tauri-admin/*.bin
+/pc/windows-server/vendor/*
+!/pc/windows-server/vendor/README.md
+/android/app/src/main/assets/sense-voice/*.onnx
+/pc/windows-server/src/admin.recovered.html
+
+appicon/
