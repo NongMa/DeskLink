@@ -57,4 +57,4 @@ android/
   过度内联，运行期 `IllegalAccessError: kotlin.sequences.d …` 闪退，已在
   `app/build.gradle.kts` 移除）。
 - 端侧识别模型较大，APK 约 273 MB。
-- 应用数据目录 `%APPDATA%\VoiceRemoteControl`（PC 端）保持原名不动；见根 `README.md` 命名红线。
+- 应用数据目录 `%APPDATA%\VoiceRemoteControl`（PC 端）保持原名不动（标识符不改动）。

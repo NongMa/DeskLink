@@ -56,10 +56,12 @@ powershell -NoProfile -ExecutionPolicy Bypass -File pc\packaging\build-msi.ps1
 # 产物：pc/packaging/out/DeskLink-Setup-0.1.0.msi
 ```
 
-## 大文件（不入 git，获取方式）
+> `vendor/`（scrcpy 5.0.1 + platform-tools）已入 git：clone 即可构建，无需单独下载。
 
-- `pc/windows-server/vendor/`：scrcpy 5.0.1 + Google platform-tools，见
-  `pc/windows-server/vendor/README.md`
+## 第三方二进制（随仓库分发）
+
+- `pc/windows-server/vendor/`：scrcpy 5.0.1 + Google platform-tools，随 git 仓库分发；
+  来源 / 许可证 / 升级步骤见 `pc/windows-server/vendor/README.md`
 
 ## 已知取舍
 
